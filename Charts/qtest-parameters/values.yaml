@@ -1,0 +1,69 @@
+# Default values for qtest-parameters-chart.
+reloader:
+  enabled: false
+
+image:
+  repository: qasymphony/parameters
+  pullPolicy: IfNotPresent
+  tag: "2.2.12"
+
+service:
+  type: LoadBalancer
+  port: 5080
+  targetPort: 5080
+  servicename: qtest-parameters-service
+
+qTestParameters:
+  qTestParametersPGUrl: postgresql://postgres:changeme@postgres.local/parameters
+  qTestParametersQTestHost: http://qtestdev1.container-dev.qtestdev.com
+  qTestParametersNodeTLSRejectUnAuthorized: "0"
+  qTestParametersNodeEnv: production
+  qTestParametersPort: 5080
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  canary:
+    annotations: {}
+  labels: {}
+  hosts:
+    - parameters.container-dev.qtestdev.com
+  paths:
+    - /
+  extraPaths:
+    []
+  tls:
+    []
+  https: false
+
+persistence:
+  enabled: false
+  ## Set annotations on pvc
+  annotations: {}
+
+  storageClass:
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+  ## Specify extra volumes. Refer to ".spec.volumes" specification : https://kubernetes.io/fr/docs/concepts/storage/volumes/
+  volumes: []
+  ## Specify extra mounts. Refer to ".spec.containers.volumeMounts" specification : https://kubernetes.io/fr/docs/concepts/storage/volumes/
+  mounts: []
+
+# VPA values
+vpaAutoscaling:
+  enabled: false
+  updatePolicy:
+    updateMode: "Off"
+
+# HPA values
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  healthApiPath: /health-check
+  periodSeconds: 30
+  failureThreshold: 4
+  targetCPUUtilizationPercentage: 85
+  targetMemoryUtilizationPercentage: 85

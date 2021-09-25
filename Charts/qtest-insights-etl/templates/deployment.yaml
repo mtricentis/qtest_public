@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qtest-insights-etl
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: qtest-insights-etl
+  template:
+    metadata:
+      labels:
+        app: qtest-insights-etl
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      containers:
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.autoscaling.targetPort }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.autoscaling.targetPort }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.autoscaling.targetPort }}
+            failureThreshold: {{ .Values.autoscaling.failureThreshold }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: qtest-insights-etl-configmap
+            - secretRef:
+                name: qtest-insights-etl-secret
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: qtest-insights-etl-logs
+              mountPath: /usr/local/insights-etl/logs
+      volumes:
+        - name: qtest-insights-etl-logs
+        {{- if .Values.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+        {{- else if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ template "qtest-insights-etl.fullname" . }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+

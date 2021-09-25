@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qtest-insights-configmap
+  labels:
+    app: qTestInsights
+data:
+  CATALINA_OPTS1: "{{ .Values.qTestInsights.qTestInsightsCatalinaOpts }}"
+  QTEST_DB_NAME: "{{ .Values.qTestInsights.qTestInsightsDBName }}"
+  QTEST_DB_HOST: "{{ .Values.qTestInsights.qTestInsightsDBHost }}"
+  QTEST_DB_USER: "{{ .Values.qTestInsights.qTestInsightsDBUser }}"
+  WRITE_QTEST_DB_NAME: "{{ .Values.qTestInsights.qTestInsightsWriteQTestDBName }}"
+  WRITE_QTEST_DB_HOST: "{{ .Values.qTestInsights.qTestInsightsWriteQTestDBHost }}"
+  WRITE_QTEST_DB_USER: "{{ .Values.qTestInsights.qTestInsightsWriteQTestDBUser }}"
+  SESSIONS_DB_NAME: "{{ .Values.qTestInsights.qTestInsightsSessionDBName }}"
+  SESSIONS_DB_HOST: "{{ .Values.qTestInsights.qTestInsightsSessionDBHost }}"
+  SESSIONS_DB_USER: "{{ .Values.qTestInsights.qTestInsightsSessionDBUser }}"

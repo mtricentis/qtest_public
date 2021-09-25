@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mgr-liquibase-job
+  {{- with .Values.liquibase.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  template:
+    metadata:
+      name: mgr-liquibase-job
+      labels:
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+    spec:
+      containers:
+        - name: qtestliquibase
+          image: "{{ .Values.image.liquibase }}:{{ .Values.image.liquibasetag }}"
+          imagePullPolicy: {{ .Values.image.liquibasepullpolicy }}
+          resources:
+            requests:
+              memory: "0.5Gi"
+              cpu: "0.25"
+            limits:
+              memory: "1Gi"
+              cpu: "0.5"
+          env:
+            - name: POSTGRES_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-liquibase-config
+                  key: client.jdbc.postgres.url
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-liquibase-config
+                  key: client.jdbc.postgres.username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qtest-liquibase-secret
+                  key: client.jdbc.postgres.password
+      restartPolicy: OnFailure

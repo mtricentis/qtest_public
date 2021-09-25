@@ -1,0 +1,56 @@
+# Default values for qtest-pulse-chart.
+reloader:
+  enabled: false
+
+
+image:
+  repository: qasymphony/pulse
+  pullPolicy: IfNotPresent
+  tag: "9.3.5"
+
+service:
+  type: LoadBalancer
+  port: 4080
+  targetPort: 4080
+  servicename: qtest-pulse-service
+
+qTestPulse:
+  qTestPulsePGUrl: postgresql://postgres:changeme@postgres.local/pulse
+  qTestPulsePort: "4080"
+  qTestPulseNodeEnv: production
+  qTestPulseRootURL: http://pulse.container-dev.qtestdev.com
+  qTestPulseQTestURL: http://qtestdev1.container-dev.qtestdev.com
+  qTestPulseScenarioURL: http://scenario.container-dev.qtestdev.com
+  qTestPulseNodeTLSRejectUnAuthorized: "0"
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  canary:
+    annotations: {}
+  labels: {}
+  hosts:
+    - pulse.container-dev.qtestdev.com
+  paths:
+    - /
+  extraPaths:
+    []
+  tls:
+    []
+  https: false
+# VPA values
+vpaAutoscaling:
+  enabled: false
+  updatePolicy:
+    updateMode: "Off"
+# HPA values
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  healthApiPath: /
+  periodSeconds: 30
+  failureThreshold: 4
+  targetCPUUtilizationPercentage: 85
+  targetMemoryUtilizationPercentage: 85
