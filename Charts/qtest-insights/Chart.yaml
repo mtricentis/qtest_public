@@ -14,7 +14,7 @@ type: application
 
 dependencies:
 - name: reloader
-version: 1.0
+  version: 1.0
   repository: "https://stakater.github.io/stakater-charts"
   condition: reloader.enabled
 
