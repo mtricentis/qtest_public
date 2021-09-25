@@ -1,0 +1,64 @@
+{{- if .Values.ingress.enabled -}}
+{{- $servicePort := .Values.service.port -}}
+{{- $paths := .Values.ingress.paths -}}
+{{- $extraPaths := .Values.ingress.extraPaths -}}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: mgr-ingress
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- if .Values.ingress.labels }}
+    {{- toYaml .Values.ingress.labels | nindent 4 }}
+    {{- end }}
+spec:
+  rules:
+  {{- if .Values.ingress.hosts }}
+  {{- range $host := .Values.ingress.hosts }}
+  - host: {{ $host }}
+    http:
+      paths:
+        {{- if $extraPaths }}
+        {{- toYaml $extraPaths | nindent 8 }}
+        {{- end }}
+        - path: /api
+          pathType: Prefix
+          backend:
+            serviceName: mgr-service-api
+            servicePort: {{ $servicePort }}
+        - path: /api2
+          pathType: Prefix
+          backend:
+            serviceName: mgr-service-api
+            servicePort: {{ $servicePort }}
+        - path: /api/v3
+          pathType: Prefix
+          backend:
+            serviceName: mgr-service-api
+            servicePort: {{ $servicePort }}
+        - path: /public/integration/webhookcallback2
+          pathType: Prefix
+          backend:
+            serviceName: mgr-service-api
+            servicePort: {{ $servicePort }}
+        - path: /realtime
+          pathType: Prefix
+          backend:
+            serviceName: mgr-service-notification
+            servicePort: {{ $servicePort }}
+        {{- range $p := $paths }}
+        - path: {{ $p }}
+          backend:
+            serviceName: mgr-service
+            servicePort: {{ $servicePort }}
+        {{- end -}}
+  {{- end -}}
+  {{- end -}}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end -}}
+{{- end }}

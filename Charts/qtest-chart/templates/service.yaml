@@ -1,0 +1,75 @@
+{{- $targetPort := .Values.service.targetPort }}
+{{- if .Values.SigSci.enabled }}
+{{- $targetPort = .Values.service.targetSigSciPort }}
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: mgr-service
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: qtest-mgr
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    chart: {{ template "qtest-chart.chart" . }}
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ $targetPort }}
+  selector:
+    app: qtest-mgr
+    release: {{ .Release.Name }}
+  type: {{ .Values.service.type }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mgr-service-api
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: qtest-mgr-api
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    chart: {{ template "qtest-chart.chart" . }}
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ $targetPort }}
+  selector:
+    app: qtest-mgr-api
+    release: {{ .Release.Name }}
+  type: {{ .Values.service.type }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mgr-service-notification
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: qtest-mgr-notification
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    chart: {{ template "qtest-chart.chart" . }}
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ $targetPort }}
+  selector:
+    app: qtest-mgr-notification
+    release: {{ .Release.Name }}
+  type: {{ .Values.service.type }}

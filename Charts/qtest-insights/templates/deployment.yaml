@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qtest-insights
+spec:
+  replicas: {{ .Values.autoscaling.minReplicas }}
+  selector:
+    matchLabels:
+      app: qtest-insights
+  template:
+    metadata:
+      labels:
+        app: qtest-insights
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      containers:
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.service.targetPort }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.service.targetPort }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.service.targetPort }}
+            failureThreshold: {{ .Values.autoscaling.failureThreshold }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: qtest-insights-configmap
+            - secretRef:
+                name: qtest-insights-secret
+          volumeMounts:
+            - name: qtest-insights-logs
+              mountPath: /usr/local/tomcat/logs/
+            - name: qtest-insights-error-logs
+              mountPath: /usr/local/tomcat/webapps/ROOT/ErrorLog/
+            - name: qtest-insights-dashboards
+              mountPath: /usr/local/tomcat/webapps/ROOT/SavedDashboards/
+            - name: qtest-insights-bookmarks
+              mountPath: /usr/local/tomcat/webapps/ROOT/SavedBookmarks/
+            - name: qtest-insights-custom-reports
+              mountPath: /usr/local/tomcat/webapps/ROOT/CustomReports/
+            - name: qtest-insights-rddatacache
+              mountPath: /usr/local/tomcat/webapps/ROOT/rdDataCache
+            - name: qtest-insights-rddownload
+              mountPath: /usr/local/tomcat/webapps/ROOT/rdDownload
+      volumes:
+        - name: qtest-insights-logs
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-logs
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: qtest-insights-error-logs
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-error-logs
+          {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: qtest-insights-dashboards
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-dashboards
+          {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: qtest-insights-bookmarks
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-bookmarks
+          {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: qtest-insights-custom-reports
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-custom-reports
+          {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: qtest-insights-rddatacache
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-rddatacache
+          {{- else }}
+          emptyDir: {}
+        {{- end }}
+        - name: qtest-insights-rddownload
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: qtest-insights-rddownload
+          {{- else }}
+          emptyDir: {}
+        {{- end }}
+

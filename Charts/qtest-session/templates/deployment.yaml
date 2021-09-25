@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qtest-session
+spec:
+  replicas: {{ .Values.autoscaling.minReplicas }}
+  selector:
+    matchLabels:
+      app: qtest-session
+  template:
+    metadata:
+      labels:
+        app: qtest-session
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      serviceAccountName: {{ template "qtest-session.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountsatoken }}
+      containers:
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.service.targetPort }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.service.targetPort }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.autoscaling.healthApiPath }}
+              port: {{ .Values.service.targetPort }}
+            failureThreshold: {{ .Values.autoscaling.failureThreshold }}
+            periodSeconds: {{ .Values.autoscaling.periodSeconds }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          env:
+            - name: SESSION_JS_HOME
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionJSHome
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionNodeEnvironment
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionPort
+            - name: DB_CONNECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionDBConnection
+            - name: QTEST_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: QTestManagerHost
+            - name: QTEST_MASTER_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionMasterToken
+            - name: SESSION_STORAGE_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionStorageType
+            - name: SESSION_STORAGE_ROOT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: qtest-session-configmap
+                  key: qTestSessionStorageRootPath
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qtest-session-secret
+                  key: qTestSessionSecretKey
+          volumeMounts:
+          - name: qtest-session-data
+            mountPath: /usr/local/sessions-js/logs
+      volumes:
+        - name: qtest-session-data
+        {{- if .Values.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+        {{- else if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ template "qtest-session.fullname" . }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+
