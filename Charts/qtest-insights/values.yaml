@@ -1,0 +1,89 @@
+# Default values for qtest-insights-chart
+
+reloader:
+  enabled: false
+
+image:
+  repository: qasymphony/insights
+  pullPolicy: IfNotPresent
+  tag: "v1.21.22.op"
+
+service:
+  type: LoadBalancer
+  port: 8080
+  targetPort: 8080
+  servicename: insights-service
+
+qTestInsights:
+  qTestInsightsCatalinaOpts: \"-server -d64 -Xms512m -Xmx2048m -XX:MaxPermSize=256m -XX:CompileThreshold=8000 -XX:-DisableExplicitGC -XX:HeapDumpPath=/logs -Djava.awt.headless=true\"
+  qTestInsightsDBName: qtest
+  qTestInsightsDBUser: postgres
+  qTestInsightsDBPassword: cG9zdGdyZXM=
+  qTestInsightsDBHost: postgres.local
+  qTestInsightsWriteQTestDBName: qtest
+  qTestInsightsWriteQTestDBUser: postgres
+  qTestInsightsWriteQTestDBPassword: cG9zdGdyZXM=
+  qTestInsightsWriteQTestDBHost: postgres.local
+  qTestInsightsSessionDBName: sessions
+  qTestInsightsSessionDBUser: postgres
+  qTestInsightsSessionDBPassword: cG9zdGdyZXM=
+  qTestInsightsSessionDBHost: postgres.local
+  qTestInsightsCSRFAllowPattern: \"$insights_security_csrf_trusted_source_pattern\"
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  canary:
+    annotations: {}
+  labels: {}
+  hosts:
+    - insights.container-dev.qtestdev.com
+  paths:
+    - /
+  extraPaths:
+    []
+  tls:
+    []
+  https: false
+
+persistence:
+  enabled: false
+  ## Set annotations on pvc
+  annotations: {}
+
+  ## Specify an existing volume claim instead of creating a new one.
+  ## When using this option all following options like storageClass, accessMode and size are ignored.
+  # existingClaim:
+
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  storageClass:
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+  ## Specify extra volumes. Refer to ".spec.volumes" specification : https://kubernetes.io/fr/docs/concepts/storage/volumes/
+  volumes: []
+  ## Specify extra mounts. Refer to ".spec.containers.volumeMounts" specification : https://kubernetes.io/fr/docs/concepts/storage/volumes/
+  mounts: []
+
+# VPA values
+vpaAutoscaling:
+  enabled: false
+  updatePolicy:
+    updateMode: "Off"
+
+# HPA values
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  healthApiPath: /rdLogon.aspx
+  periodSeconds: 30
+  failureThreshold: 4
+  targetCPUUtilizationPercentage: 85
+  targetMemoryUtilizationPercentage: 85
